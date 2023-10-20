@@ -1,44 +1,36 @@
 package com.raven.main;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.pdfbox.rendering.ImageType;
-import java.awt.image.RenderedImage;
+import org.apache.pdfbox.printing.PDFPageable;
 
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
-import org.apache.pdfbox.Loader;
+import javax.swing.JOptionPane;
 
 public class PdfLoader {
 
-    private static byte[] file;
+    public static void loadAndPrintPDF(String pdfFilePath) throws IOException, PrinterException {
+        try (PDDocument document = PDDocument.load(new File(pdfFilePath))) {
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setPageable(new PDFPageable(document));
 
-    public static void loadAndRenderPDF(String pdfFilePath, String imageOutputPath) throws IOException {
-        try (PDDocument document = Loader.loadPDF(file);
-) {
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
-            int numPages = document.getNumberOfPages();
-
-            for (int pageIndex = 0; pageIndex < numPages; pageIndex++) {
-                PDPage page = document.getPage(pageIndex);
-                RenderedImage image = pdfRenderer.renderImageWithDPI(pageIndex, 300, ImageType.RGB);
-
-                // Save the rendered image as a file (optional)
-                File outputFile = new File(imageOutputPath + "page_" + (pageIndex + 1) + ".png");
-                ImageIO.write(image, "png", outputFile);
+            if (job.printDialog()) {
+                job.print();
             }
+        } catch (IOException | PrinterException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Printing error: " + ex.getMessage(), "Printing Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public static void main(String[] args) {
         String pdfFilePath = "path/to/your.pdf";
-        String imageOutputPath = "path/to/output/images/";
 
         try {
-            loadAndRenderPDF(pdfFilePath, imageOutputPath);
-        } catch (IOException e) {
+            loadAndPrintPDF(pdfFilePath);
+        } catch (IOException | PrinterException e) {
             e.printStackTrace();
         }
     }
